@@ -44,7 +44,6 @@
     border-radius:6px; color:#f87171;
   }
   .err-label { font-size:9px; letter-spacing:0.2em; margin-bottom:8px; opacity:0.7; }
-  #error-detail { font-size:11px; color:#ff9999; margin-top:10px; line-height:1.6; white-space:pre-wrap; }
   #debug-box {
     display:none; margin-top:20px; padding:14px 16px;
     background:rgba(52,180,100,0.05); border:1px solid rgba(52,180,100,0.2);
@@ -78,7 +77,7 @@
 <body>
 
 <div style="margin-bottom:40px">
-  <div class="eyebrow">SMHI · Ringsjödammen övre · Vattenstånd</div>
+  <div class="eyebrow">SMHI · Västra Ringsjön · Vattenstånd</div>
   <h1>Ringsjön<br><em>Water Level</em></h1>
   <div class="tagline">Dagliga mätningar fr.o.m. 1974 · SMHI Open Data (CC-BY)</div>
   <button class="fetch-btn" id="fetchBtn" onclick="loadData()">
@@ -95,7 +94,6 @@
 <div id="error-box">
   <div class="err-label">FEL VID DATAHÄMTNING</div>
   <div id="error-msg"></div>
-  <div id="error-detail"></div>
   <button class="fetch-btn" style="margin-top:16px" onclick="loadData()">FÖRSÖK IGEN</button>
 </div>
 
@@ -117,23 +115,23 @@
 </div>
 
 <script>
-const API = 'https://opendata-download-hydroobs.smhi.se/api/version/1.0';
-const SEARCH_NAMES = ['ringsjödammen', 'ringsjo', 'ringsjö'];
-let chartInstance = null;
+const API        = 'https://opendata-download-hydroobs.smhi.se/api/version/1.0';
+const STATION_ID = 70004; // VÄSTRA RINGSJÖN
 const debugLines = [];
+let chartInstance = null;
 
 function setMsg(m) { document.getElementById('loader-msg').textContent = m; }
-function dbg(m) { debugLines.push(m); }
-
-function showError(msg, detail) {
-  document.getElementById('loader').style.display = 'none';
-  document.getElementById('fetchBtn').style.display = 'inline-flex';
-  document.getElementById('error-msg').textContent = msg;
-  document.getElementById('error-detail').textContent = detail || '';
-  document.getElementById('error-box').style.display = 'block';
-  // Always show debug info on error
+function dbg(m)    { debugLines.push(m); }
+function showDebug() {
   document.getElementById('debug-box').textContent = debugLines.join('\n');
   document.getElementById('debug-box').style.display = 'block';
+}
+function showError(msg) {
+  document.getElementById('loader').style.display    = 'none';
+  document.getElementById('fetchBtn').style.display  = 'inline-flex';
+  document.getElementById('error-msg').textContent   = msg;
+  document.getElementById('error-box').style.display = 'block';
+  showDebug();
 }
 
 function parseCSV(text) {
@@ -182,20 +180,20 @@ const fmt = v => v != null ? v.toFixed(1) : '—';
 function renderStats(s) {
   document.getElementById('v-current').textContent = fmt(s.current?.value);
   document.getElementById('s-current').textContent = s.current?.date ?? '';
-  document.getElementById('v-max').textContent = fmt(s.max.value);
-  document.getElementById('s-max').textContent = s.max.date;
-  document.getElementById('v-min').textContent = fmt(s.min.value);
-  document.getElementById('s-min').textContent = s.min.date;
-  document.getElementById('v-avg').textContent = fmt(s.avg);
-  document.getElementById('s-avg').textContent = s.total.toLocaleString('sv') + ' dagar';
-  document.getElementById('v-sept').textContent = s.sept2024 ? fmt(s.sept2024.value) : '–';
-  document.getElementById('s-sept').textContent = s.sept2024 ? 'uppmätt' : 'saknas i data';
+  document.getElementById('v-max').textContent     = fmt(s.max.value);
+  document.getElementById('s-max').textContent     = s.max.date;
+  document.getElementById('v-min').textContent     = fmt(s.min.value);
+  document.getElementById('s-min').textContent     = s.min.date;
+  document.getElementById('v-avg').textContent     = fmt(s.avg);
+  document.getElementById('s-avg').textContent     = s.total.toLocaleString('sv') + ' dagar';
+  document.getElementById('v-sept').textContent    = s.sept2024 ? fmt(s.sept2024.value) : '–';
+  document.getElementById('s-sept').textContent    = s.sept2024 ? 'uppmätt' : 'saknas i data';
 }
 
 function renderChart(rows, stats) {
-  const thin = thinForChart(rows);
-  const labels = thin.map(r => r.date);
-  const data   = thin.map(r => r.value);
+  const thin    = thinForChart(rows);
+  const labels  = thin.map(r => r.date);
+  const data    = thin.map(r => r.value);
   const avgLine = data.map(() => parseFloat(stats.avg.toFixed(1)));
   if (chartInstance) chartInstance.destroy();
   chartInstance = new Chart(document.getElementById('myChart').getContext('2d'), {
@@ -226,46 +224,29 @@ function renderChart(rows, stats) {
   });
 }
 
-async function findStation() {
-  const res = await fetch(`${API}/parameter/7.json`);
-  if (!res.ok) throw new Error(`Kunde inte hämta stationslista: HTTP ${res.status}`);
+async function getAvailablePeriods() {
+  const res = await fetch(`${API}/parameter/7/station/${STATION_ID}.json`);
+  if (!res.ok) { dbg(`Stationsinfo: HTTP ${res.status}`); return []; }
   const data = await res.json();
-  const stations = data.station || [];
-  dbg(`Totalt ${stations.length} stationer för parameter 7`);
-  const match = stations.find(s => SEARCH_NAMES.some(n => (s.name||'').toLowerCase().includes(n)));
-  if (!match) throw new Error(`Hittade inte Ringsjödammen.\nStationer: ${stations.map(s=>s.name).join(', ')}`);
-  dbg(`Hittade station: ${match.name} (ID: ${match.id})`);
-  return match;
-}
-
-async function getAvailablePeriods(stationId) {
-  const res = await fetch(`${API}/parameter/7/station/${stationId}.json`);
-  if (!res.ok) {
-    dbg(`Kunde inte hämta stationsinfo: HTTP ${res.status}`);
-    return [];
-  }
-  const data = await res.json();
-  const periods = (data.period || []).map(p => ({ key: p.key, from: p.from, to: p.to }));
-  dbg(`Tillgängliga perioder:\n${periods.map(p => `  ${p.key}: ${new Date(p.from).toISOString().slice(0,10)} → ${new Date(p.to).toISOString().slice(0,10)}`).join('\n')}`);
+  const periods = (data.period || []);
+  // from/to are Unix timestamps in milliseconds
+  periods.forEach(p => {
+    const fromStr = p.from ? new Date(p.from).toISOString().slice(0,10) : '?';
+    const toStr   = p.to   ? new Date(p.to).toISOString().slice(0,10)   : '?';
+    dbg(`  Period: "${p.key}"  ${fromStr} → ${toStr}`);
+  });
   return periods.map(p => p.key);
 }
 
-async function fetchPeriod(stationId, period) {
+async function fetchPeriod(period) {
   try {
-    const url = `${API}/parameter/7/station/${stationId}/period/${period}/data.csv`;
+    const url = `${API}/parameter/7/station/${STATION_ID}/period/${period}/data.csv`;
     const res = await fetch(url);
-    if (!res.ok) {
-      dbg(`  ${period}: HTTP ${res.status}`);
-      return [];
-    }
-    const text = await res.text();
-    const rows = parseCSV(text);
-    dbg(`  ${period}: ${rows.length} rader (${rows[0]?.date ?? '?'} → ${rows[rows.length-1]?.date ?? '?'})`);
+    if (!res.ok) { dbg(`  ${period}: HTTP ${res.status} (ingen data)`); return []; }
+    const rows = parseCSV(await res.text());
+    dbg(`  ${period}: ${rows.length} rader  (${rows[0]?.date ?? '?'} → ${rows[rows.length-1]?.date ?? '?'})`);
     return rows;
-  } catch(e) {
-    dbg(`  ${period}: fel – ${e.message}`);
-    return [];
-  }
+  } catch(e) { dbg(`  ${period}: fel – ${e.message}`); return []; }
 }
 
 async function loadData() {
@@ -277,40 +258,33 @@ async function loadData() {
   document.getElementById('loader').style.display    = 'block';
 
   try {
-    setMsg('Söker station hos SMHI…');
-    const station = await findStation();
-
     setMsg('Hämtar tillgängliga perioder…');
-    const periods = await getAvailablePeriods(station.id);
+    dbg(`Station: VÄSTRA RINGSJÖN (ID: ${STATION_ID})`);
+    dbg('Tillgängliga perioder:');
+    const periods = await getAvailablePeriods();
+    dbg(`Totalt: ${periods.length} period(er)\n`);
+    dbg('Hämtar data:');
 
-    setMsg(`Hämtar data (${periods.length} perioder)…`);
-    dbg(`\nHämtar data för ${periods.length} period(er):`);
-    const fetched = await Promise.all(periods.map(p => fetchPeriod(station.id, p)));
+    const fetched = await Promise.all(periods.map(p => fetchPeriod(p)));
     const allRows = mergeRows(...fetched);
 
-    dbg(`\nTotalt efter merge: ${allRows.length} rader`);
-    dbg(`Datumspann: ${allRows[0]?.date} → ${allRows[allRows.length-1]?.date}`);
+    dbg(`\nEfter merge: ${allRows.length} rader`);
+    dbg(`Spann: ${allRows[0]?.date} → ${allRows[allRows.length-1]?.date}`);
 
-    // Show debug info even on success
-    document.getElementById('debug-box').textContent = debugLines.join('\n');
-    document.getElementById('debug-box').style.display = 'block';
+    showDebug();
 
     if (allRows.length === 0) throw new Error('Inga giltiga datarader hittades');
 
-    setMsg('Beräknar statistik…');
     const stats = computeStats(allRows);
     renderStats(stats);
-
     document.getElementById('loader').style.display  = 'none';
     document.getElementById('content').style.display = 'block';
     renderChart(allRows, stats);
-
-    const dateRange = `${allRows[0].date} – ${allRows[allRows.length-1].date}`;
     document.getElementById('footer').textContent =
-      `SMHI · ${station.name} · ${dateRange} · ${allRows.length.toLocaleString('sv')} mätpunkter · Hämtad ${new Date().toLocaleDateString('sv-SE')}`;
+      `SMHI · Västra Ringsjön · ${allRows[0].date} – ${allRows[allRows.length-1].date} · ${allRows.length.toLocaleString('sv')} mätpunkter · Hämtad ${new Date().toLocaleDateString('sv-SE')}`;
 
   } catch(e) {
-    showError(e.message.split('\n')[0], e.message.split('\n').slice(1).join('\n'));
+    showError(e.message);
   }
 }
 </script>
