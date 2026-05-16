@@ -25,17 +25,6 @@
   h1 { font-family:'Fraunces',serif; font-weight:200; font-size:clamp(32px,8vw,56px); color:#e8f5ec; line-height:1; letter-spacing:-0.02em; }
   h1 em { font-style:italic; color:var(--green); }
   .tagline { font-size:11px; color:var(--muted); margin-top:8px; letter-spacing:0.05em; }
-
-  .fetch-btn {
-    display:inline-flex; align-items:center; gap:10px; margin-top:28px;
-    padding:13px 28px; background:transparent; border:1px solid var(--green);
-    border-radius:4px; color:var(--green); font-family:'DM Mono',monospace;
-    font-size:12px; letter-spacing:0.15em; cursor:pointer; transition:background 0.2s;
-  }
-  .fetch-btn:hover { background:rgba(52,180,100,0.1); }
-  .dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation:pulse 1.8s ease-in-out infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
   .update-notice {
     display:inline-flex; align-items:center; gap:8px; margin-top:14px;
     padding:8px 14px; background:rgba(52,180,100,0.07);
@@ -44,31 +33,26 @@
   }
   .update-notice a { color:var(--green); text-decoration:none; }
   .update-notice a:hover { text-decoration:underline; }
-
   #loader { display:none; margin-top:36px; color:var(--muted); font-size:12px; letter-spacing:0.1em; }
   .bar-track { width:240px; height:1px; background:var(--bg2); margin-top:14px; border-radius:1px; overflow:hidden; }
   .bar-fill { height:100%; width:35%; background:var(--green); border-radius:1px; animation:sweep 1.6s ease-in-out infinite; }
   @keyframes sweep { 0%{transform:translateX(-100%)} 100%{transform:translateX(400%)} }
-
   #error-box {
     display:none; margin-top:28px; padding:18px 20px;
     background:rgba(248,113,113,0.07); border:1px solid rgba(248,113,113,0.3);
     border-radius:6px; color:#f87171;
   }
   .err-label { font-size:9px; letter-spacing:0.2em; margin-bottom:8px; opacity:0.7; }
-
   #content { display:none; margin-top:36px; animation:fadein 0.5s ease; }
   @keyframes fadein { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
-
-  /* KPI cards */
   .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:28px; }
   .card { background:var(--card-bg); border:1px solid var(--border); border-radius:6px; padding:16px 14px; position:relative; overflow:hidden; }
   .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
-  .card.c-current::before  { background:var(--teal); }
-  .card.c-max::before      { background:var(--red); }
-  .card.c-min::before      { background:var(--green); }
-  .card.c-avg::before      { background:var(--amber); }
-  .card.c-bench::before    { background:var(--violet); }
+  .card.c-current::before { background:var(--teal); }
+  .card.c-max::before     { background:var(--red); }
+  .card.c-min::before     { background:var(--green); }
+  .card.c-avg::before     { background:var(--amber); }
+  .card.c-bench::before   { background:var(--violet); }
   .card-label { font-size:8px; letter-spacing:0.22em; color:var(--muted); margin-bottom:12px; }
   .card-value { font-family:'Fraunces',serif; font-weight:400; font-size:30px; line-height:1; }
   .card.c-current .card-value { color:var(--teal); }
@@ -78,8 +62,6 @@
   .card.c-bench .card-value   { color:var(--violet); }
   .card-unit { font-size:10px; color:var(--muted); margin-top:4px; }
   .card-sub  { font-size:9px; color:#2a4a32; margin-top:6px; }
-
-  /* Benchmark input inside card */
   .bench-input {
     width:100%; margin-top:8px; padding:5px 8px;
     background:rgba(167,139,250,0.1); border:1px solid rgba(167,139,250,0.3);
@@ -88,11 +70,7 @@
   }
   .bench-input:focus { border-color:#a78bfa; background:rgba(167,139,250,0.15); }
   .bench-hint { font-size:8px; color:#4a3a6a; margin-top:4px; }
-
-  /* Time horizon buttons */
-  .horizon-row {
-    display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;
-  }
+  .horizon-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
   .hbtn {
     padding:7px 14px; background:transparent;
     border:1px solid rgba(52,180,100,0.3); border-radius:4px;
@@ -101,12 +79,10 @@
   }
   .hbtn:hover  { border-color:var(--green); color:var(--green); }
   .hbtn.active { border-color:var(--green); color:var(--green); background:rgba(52,180,100,0.1); }
-
   .chart-box { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:22px 16px 14px; margin-bottom:16px; }
   .chart-label { font-size:9px; letter-spacing:0.22em; color:var(--muted); margin-bottom:18px; }
   canvas { width:100%!important; }
   .footer { font-size:9px; color:#1a3a22; text-align:center; margin-top:24px; letter-spacing:0.05em; }
-
   .howto {
     margin-top:32px; padding:18px 20px;
     background:rgba(167,139,250,0.05); border:1px solid rgba(167,139,250,0.2);
@@ -122,10 +98,6 @@
   <div class="eyebrow">SMHI · Ringsjödammen övre · Vattenstånd</div>
   <h1>Ringsjön<br><em>Water Level</em></h1>
   <div class="tagline">Dagliga mätningar · SMHI Open Data (CC-BY)</div>
-  <button class="fetch-btn" id="fetchBtn" onclick="loadData()">
-    <span class="dot"></span>
-    LADDA DATA
-  </button>
   <div class="update-notice">
     Data från <code>smhi-opendata.csv</code> &nbsp;·&nbsp;
     <a href="https://www.smhi.se/data/hitta-data-for-en-plats/ladda-ner-observationer-fran-sjoar-och-vattendrag/waterLevel/2176" target="_blank">Ladda ner ny CSV från SMHI →</a>
@@ -141,7 +113,6 @@
   <div class="err-label">FEL</div>
   <div id="error-msg"></div>
   <div id="error-detail" style="font-size:10px;color:#ff9999;margin-top:8px;white-space:pre-wrap"></div>
-  <button class="fetch-btn" style="margin-top:16px" onclick="loadData()">FÖRSÖK IGEN</button>
 </div>
 
 <div id="content">
@@ -175,17 +146,16 @@
       <div class="card-value" id="v-bench">53.60</div>
       <div class="card-unit">m ö.h.</div>
       <input class="bench-input" id="bench-input" type="number" step="0.01" min="40" max="70" value="53.60" oninput="onBenchChange()">
-      <div class="bench-hint">Redigera och tryck Enter</div>
+      <div class="bench-hint">Redigera för att ändra</div>
     </div>
   </div>
 
-  <!-- Time horizon buttons -->
   <div class="horizon-row">
-    <button class="hbtn" onclick="setHorizon(1,'1M')">1 MÅN</button>
-    <button class="hbtn" onclick="setHorizon(6,'6M')">6 MÅN</button>
-    <button class="hbtn" onclick="setHorizon(12,'1ÅR')">1 ÅR</button>
-    <button class="hbtn" onclick="setHorizon(60,'5ÅR')">5 ÅR</button>
-    <button class="hbtn active" onclick="setHorizon(0,'ALL')">ALLA</button>
+    <button class="hbtn" onclick="setHorizon(1,this)">1 MÅN</button>
+    <button class="hbtn" onclick="setHorizon(6,this)">6 MÅN</button>
+    <button class="hbtn" onclick="setHorizon(12,this)">1 ÅR</button>
+    <button class="hbtn" onclick="setHorizon(60,this)">5 ÅR</button>
+    <button class="hbtn active" onclick="setHorizon(0,this)">ALLA</button>
   </div>
 
   <div class="chart-box">
@@ -201,45 +171,38 @@
   2. Ladda ner hela perioden som CSV<br>
   3. Döp om filen till <strong>smhi-opendata.csv</strong><br>
   4. Ladda upp den till GitHub-repot <strong>Ringsjoen-Water-Level</strong> (ersätt den gamla)<br>
-  5. Klicka <strong>LADDA DATA</strong> här – klart!
+  5. Ladda om sidan – klart!
 </div>
 
 <script>
 const CSV_URL       = 'smhi-opendata.csv';
-const MIN_VALID_M   = 40;   // filter out readings below 40 m (bad data)
+const MIN_VALID_CM  = 40 * 100;   // 40 m in cm
 const DEFAULT_BENCH = 53.60;
 const LS_BENCH_KEY  = 'ringsjon_benchmark';
 
 let allRows      = [];
 let globalStats  = null;
-let activeMonths = 0;    // 0 = all
+let activeMonths = 0;
 let chartInstance = null;
 
-// ── Persistence ──────────────────────────────────────────────────────────────
 function loadBenchmark() {
   const saved = localStorage.getItem(LS_BENCH_KEY);
   return saved !== null ? parseFloat(saved) : DEFAULT_BENCH;
 }
-function saveBenchmark(v) {
-  localStorage.setItem(LS_BENCH_KEY, v.toString());
-}
+function saveBenchmark(v) { localStorage.setItem(LS_BENCH_KEY, v.toString()); }
 
-// ── Formatting ───────────────────────────────────────────────────────────────
-// CSV values are in cm; display in metres with 2 decimals
 const cmToM  = cm => cm / 100;
 const fmtM   = cm => cm != null ? cmToM(cm).toFixed(2) : '—';
 
-// ── Loader / Error UI ────────────────────────────────────────────────────────
 function setMsg(m) { document.getElementById('loader-msg').textContent = m; }
+
 function showError(msg, detail) {
-  document.getElementById('loader').style.display    = 'none';
-  document.getElementById('fetchBtn').style.display  = 'inline-flex';
-  document.getElementById('error-msg').textContent   = msg;
+  document.getElementById('loader').style.display     = 'none';
+  document.getElementById('error-msg').textContent    = msg;
   document.getElementById('error-detail').textContent = detail || '';
-  document.getElementById('error-box').style.display = 'block';
+  document.getElementById('error-box').style.display  = 'block';
 }
 
-// ── CSV Parsing ───────────────────────────────────────────────────────────────
 function parseCSV(text) {
   const rows = []; let started = false;
   for (const line of text.split('\n')) {
@@ -247,15 +210,13 @@ function parseCSV(text) {
     const p = line.split(';'); if (p.length < 2) continue;
     const date = p[0].trim();
     const cm   = parseFloat(p[1].trim().replace(',', '.'));
-    // Keep only valid dates and values above MIN_VALID_M metres
-    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(cm) && cm >= MIN_VALID_M * 100) {
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(cm) && cm >= MIN_VALID_CM) {
       rows.push({ date, cm });
     }
   }
   return rows;
 }
 
-// ── Stats ─────────────────────────────────────────────────────────────────────
 function computeStats(rows) {
   const vals   = rows.map(r => r.cm);
   const minVal = Math.min(...vals);
@@ -269,7 +230,6 @@ function computeStats(rows) {
   };
 }
 
-// ── Render KPI cards ──────────────────────────────────────────────────────────
 function renderStats(s) {
   document.getElementById('v-current').textContent = fmtM(s.current?.cm);
   document.getElementById('s-current').textContent = s.current?.date ?? '';
@@ -281,12 +241,12 @@ function renderStats(s) {
   document.getElementById('s-avg').textContent     = s.total.toLocaleString('sv') + ' dagar';
 }
 
-// ── Benchmark card ─────────────────────────────────────────────────────────────
 function initBenchmark() {
   const b = loadBenchmark();
-  document.getElementById('bench-input').value = b.toFixed(2);
-  document.getElementById('v-bench').textContent = b.toFixed(2);
+  document.getElementById('bench-input').value     = b.toFixed(2);
+  document.getElementById('v-bench').textContent   = b.toFixed(2);
 }
+
 function onBenchChange() {
   const raw = parseFloat(document.getElementById('bench-input').value);
   if (isNaN(raw)) return;
@@ -295,11 +255,10 @@ function onBenchChange() {
   if (allRows.length > 0) renderChart();
 }
 
-// ── Time horizon ──────────────────────────────────────────────────────────────
-function setHorizon(months, label) {
+function setHorizon(months, btn) {
   activeMonths = months;
   document.querySelectorAll('.hbtn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  btn.classList.add('active');
   if (allRows.length > 0) renderChart();
 }
 
@@ -311,9 +270,8 @@ function filterByHorizon(rows) {
   return rows.filter(r => r.date >= cutoffStr);
 }
 
-// ── Thinning for performance ───────────────────────────────────────────────────
 function thinRows(rows) {
-  if (rows.length <= 500) return rows; // no thinning needed for short ranges
+  if (rows.length <= 500) return rows;
   return rows.filter((_, i) => {
     const y = parseInt(rows[i].date);
     if (y >= 2020) return true;
@@ -322,19 +280,18 @@ function thinRows(rows) {
   });
 }
 
-// ── Chart ─────────────────────────────────────────────────────────────────────
 function renderChart() {
-  const bench    = parseFloat(document.getElementById('bench-input').value) || DEFAULT_BENCH;
-  const filtered = filterByHorizon(allRows);
-  const thin     = thinRows(filtered);
-  const labels   = thin.map(r => r.date);
-  const data     = thin.map(r => cmToM(r.cm));
-  const avgLine  = data.map(() => cmToM(globalStats.avg));
+  const bench     = parseFloat(document.getElementById('bench-input').value) || DEFAULT_BENCH;
+  const filtered  = filterByHorizon(allRows);
+  const thin      = thinRows(filtered);
+  const labels    = thin.map(r => r.date);
+  const data      = thin.map(r => cmToM(r.cm));
+  const avgLine   = data.map(() => cmToM(globalStats.avg));
   const benchLine = data.map(() => bench);
 
-  // Update chart label
-  const horizonLabel = activeMonths === 0 ? 'ALLA DATA' :
-    activeMonths === 1 ? 'SENASTE MÅNADEN' :
+  const horizonLabel =
+    activeMonths === 0  ? 'ALLA DATA' :
+    activeMonths === 1  ? 'SENASTE MÅNADEN' :
     activeMonths === 12 ? 'SENASTE ÅRET' :
     `SENASTE ${activeMonths} MÅNADERNA`;
   document.getElementById('chart-label').textContent = `VATTENSTÅND (m ö.h.) · ${horizonLabel}`;
@@ -343,7 +300,7 @@ function renderChart() {
   chartInstance = new Chart(document.getElementById('myChart').getContext('2d'), {
     type: 'line',
     data: { labels, datasets: [
-      { label:'Vattenstånd', data,       borderColor:'#34b464',              borderWidth:1.5, pointRadius:0, tension:0.3, fill:false },
+      { label:'Vattenstånd', data,        borderColor:'#34b464',               borderWidth:1.5, pointRadius:0, tension:0.3, fill:false },
       { label:'Medel',       data:avgLine,   borderColor:'rgba(245,158,11,0.6)', borderWidth:1,   pointRadius:0, tension:0,   fill:false, borderDash:[6,4] },
       { label:'Benchmark',   data:benchLine, borderColor:'rgba(167,139,250,0.7)',borderWidth:1,   pointRadius:0, tension:0,   fill:false, borderDash:[3,3] },
     ]},
@@ -364,11 +321,8 @@ function renderChart() {
           ticks:{
             color:'#2a4a32', font:{ family:'DM Mono', size:9 }, maxTicksLimit:12, maxRotation:0,
             callback:(_,i) => {
-              const d = labels[i];
-              if (!d) return '';
-              return activeMonths <= 1 ? d.slice(5) :   // MM-DD
-                     activeMonths <= 12 ? d.slice(0,7) : // YYYY-MM
-                     d.slice(0,4);                        // YYYY
+              const d = labels[i]; if (!d) return '';
+              return activeMonths <= 1 ? d.slice(5) : activeMonths <= 12 ? d.slice(0,7) : d.slice(0,4);
             }
           },
           grid:{ color:'rgba(52,180,100,0.07)' }, border:{ color:'rgba(52,180,100,0.15)' }
@@ -382,13 +336,10 @@ function renderChart() {
   });
 }
 
-// ── Load CSV ──────────────────────────────────────────────────────────────────
 async function loadData() {
-  document.getElementById('fetchBtn').style.display  = 'none';
   document.getElementById('error-box').style.display = 'none';
   document.getElementById('content').style.display   = 'none';
   document.getElementById('loader').style.display    = 'block';
-
   try {
     setMsg('Läser smhi-opendata.csv…');
     const res = await fetch(CSV_URL + '?t=' + Date.now());
@@ -396,29 +347,27 @@ async function loadData() {
       if (res.status === 404) throw new Error('smhi-opendata.csv hittades inte.\nLadda upp CSV från SMHI och döp den till smhi-opendata.csv');
       throw new Error(`HTTP ${res.status}`);
     }
-
     setMsg('Tolkar data…');
     const text = await res.text();
     allRows = parseCSV(text);
     if (allRows.length === 0) throw new Error('Inga giltiga datarader (≥40 m) hittades.\nKontrollera CSV-formatet.');
-
     setMsg('Beräknar statistik…');
     globalStats = computeStats(allRows);
     renderStats(globalStats);
     initBenchmark();
-
     document.getElementById('loader').style.display  = 'none';
     document.getElementById('content').style.display = 'block';
     renderChart();
-
     document.getElementById('footer').textContent =
       `SMHI Open Data · CC-BY · ${allRows[0].date} – ${allRows[allRows.length-1].date} · ${allRows.length.toLocaleString('sv')} mätpunkter`;
-
   } catch(e) {
     const parts = e.message.split('\n');
     showError(parts[0], parts.slice(1).join('\n'));
   }
 }
+
+// Auto-load on page open
+window.addEventListener('load', loadData);
 </script>
 </body>
 </html>
