@@ -322,7 +322,10 @@ function renderChart() {
             color:'#2a4a32', font:{ family:'DM Mono', size:9 }, maxTicksLimit:12, maxRotation:0,
             callback:(_,i) => {
               const d = labels[i]; if (!d) return '';
-              return activeMonths <= 1 ? d.slice(5) : activeMonths <= 12 ? d.slice(0,7) : d.slice(0,4);
+              const spanDays = (new Date(labels[labels.length-1]) - new Date(labels[0])) / 86400000;
+              return spanDays <= 60  ? d.slice(5)    // MM-DD
+                   : spanDays <= 400 ? d.slice(0,7)  // YYYY-MM
+                   :                   d.slice(0,4);  // YYYY
             }
           },
           grid:{ color:'rgba(52,180,100,0.07)' }, border:{ color:'rgba(52,180,100,0.15)' }
