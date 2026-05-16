@@ -45,23 +45,40 @@
   .err-label { font-size:9px; letter-spacing:0.2em; margin-bottom:8px; opacity:0.7; }
   #content { display:none; margin-top:36px; animation:fadein 0.5s ease; }
   @keyframes fadein { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
-  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:28px; }
+
+  /* Row labels */
+  .row-label {
+    font-size:9px; letter-spacing:0.25em; color:var(--green-dim);
+    text-transform:uppercase; margin-bottom:8px; margin-top:20px;
+  }
+  .row-label:first-of-type { margin-top:0; }
+
+  /* Cards */
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:4px; }
   .card { background:var(--card-bg); border:1px solid var(--border); border-radius:6px; padding:16px 14px; position:relative; overflow:hidden; }
   .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
-  .card.c-current::before { background:var(--teal); }
   .card.c-max::before     { background:var(--red); }
   .card.c-min::before     { background:var(--green); }
   .card.c-avg::before     { background:var(--amber); }
   .card.c-bench::before   { background:var(--violet); }
+  .card.c-current::before { background:var(--teal); }
+  .card.c-pmax::before    { background:var(--red); opacity:0.6; }
+  .card.c-pmin::before    { background:var(--green); opacity:0.6; }
+  .card.c-pavg::before    { background:var(--amber); opacity:0.6; }
   .card-label { font-size:8px; letter-spacing:0.22em; color:var(--muted); margin-bottom:12px; }
   .card-value { font-family:'Fraunces',serif; font-weight:400; font-size:30px; line-height:1; }
-  .card.c-current .card-value { color:var(--teal); }
   .card.c-max .card-value     { color:var(--red); }
   .card.c-min .card-value     { color:var(--green); }
   .card.c-avg .card-value     { color:var(--amber); }
   .card.c-bench .card-value   { color:var(--violet); }
+  .card.c-current .card-value { color:var(--teal); }
+  .card.c-pmax .card-value    { color:#f8a0a0; }
+  .card.c-pmin .card-value    { color:#80d4a0; }
+  .card.c-pavg .card-value    { color:#fcd07a; }
   .card-unit { font-size:10px; color:var(--muted); margin-top:4px; }
   .card-sub  { font-size:9px; color:#2a4a32; margin-top:6px; }
+
+  /* Benchmark input */
   .bench-input {
     width:100%; margin-top:8px; padding:5px 8px;
     background:rgba(167,139,250,0.1); border:1px solid rgba(167,139,250,0.3);
@@ -70,7 +87,9 @@
   }
   .bench-input:focus { border-color:#a78bfa; background:rgba(167,139,250,0.15); }
   .bench-hint { font-size:8px; color:#4a3a6a; margin-top:4px; }
-  .horizon-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+
+  /* Time horizon buttons */
+  .horizon-row { display:flex; gap:8px; flex-wrap:wrap; margin:24px 0 16px; }
   .hbtn {
     padding:7px 14px; background:transparent;
     border:1px solid rgba(52,180,100,0.3); border-radius:4px;
@@ -79,6 +98,7 @@
   }
   .hbtn:hover  { border-color:var(--green); color:var(--green); }
   .hbtn.active { border-color:var(--green); color:var(--green); background:rgba(52,180,100,0.1); }
+
   .chart-box { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:22px 16px 14px; margin-bottom:16px; }
   .chart-label { font-size:9px; letter-spacing:0.22em; color:var(--muted); margin-bottom:18px; }
   canvas { width:100%!important; }
@@ -116,27 +136,24 @@
 </div>
 
 <div id="content">
+
+  <!-- Row 1: Historical + Benchmark -->
+  <div class="row-label">HISTORIK · ALLA DATA</div>
   <div class="cards">
-    <div class="card c-current">
-      <div class="card-label">SENASTE MÄTNING</div>
-      <div class="card-value" id="v-current">—</div>
-      <div class="card-unit">m ö.h.</div>
-      <div class="card-sub" id="s-current"></div>
-    </div>
     <div class="card c-max">
-      <div class="card-label">HISTORISKT MAX</div>
+      <div class="card-label">MAX</div>
       <div class="card-value" id="v-max">—</div>
       <div class="card-unit">m ö.h.</div>
       <div class="card-sub" id="s-max"></div>
     </div>
     <div class="card c-min">
-      <div class="card-label">HISTORISKT MIN</div>
+      <div class="card-label">MIN</div>
       <div class="card-value" id="v-min">—</div>
       <div class="card-unit">m ö.h.</div>
       <div class="card-sub" id="s-min"></div>
     </div>
     <div class="card c-avg">
-      <div class="card-label">HISTORISKT MEDEL</div>
+      <div class="card-label">MEDEL</div>
       <div class="card-value" id="v-avg">—</div>
       <div class="card-unit">m ö.h.</div>
       <div class="card-sub" id="s-avg"></div>
@@ -150,6 +167,7 @@
     </div>
   </div>
 
+  <!-- Time horizon buttons -->
   <div class="horizon-row">
     <button class="hbtn" onclick="setHorizon(1,this)">1 MÅN</button>
     <button class="hbtn" onclick="setHorizon(6,this)">6 MÅN</button>
@@ -158,7 +176,36 @@
     <button class="hbtn active" onclick="setHorizon(0,this)">ALLA</button>
   </div>
 
-  <div class="chart-box">
+  <!-- Row 2: Period-specific -->
+  <div class="row-label" id="period-label">VALD PERIOD · ALLA DATA</div>
+  <div class="cards">
+    <div class="card c-current">
+      <div class="card-label">SENASTE MÄTNING</div>
+      <div class="card-value" id="v-current">—</div>
+      <div class="card-unit">m ö.h.</div>
+      <div class="card-sub" id="s-current"></div>
+    </div>
+    <div class="card c-pmax">
+      <div class="card-label">MAX PERIOD</div>
+      <div class="card-value" id="v-pmax">—</div>
+      <div class="card-unit">m ö.h.</div>
+      <div class="card-sub" id="s-pmax"></div>
+    </div>
+    <div class="card c-pmin">
+      <div class="card-label">MIN PERIOD</div>
+      <div class="card-value" id="v-pmin">—</div>
+      <div class="card-unit">m ö.h.</div>
+      <div class="card-sub" id="s-pmin"></div>
+    </div>
+    <div class="card c-pavg">
+      <div class="card-label">MEDEL PERIOD</div>
+      <div class="card-value" id="v-pavg">—</div>
+      <div class="card-unit">m ö.h.</div>
+      <div class="card-sub" id="s-pavg"></div>
+    </div>
+  </div>
+
+  <div class="chart-box" style="margin-top:20px">
     <div class="chart-label" id="chart-label">VATTENSTÅND (m ö.h.) · ALLA DATA</div>
     <canvas id="myChart" height="240"></canvas>
   </div>
@@ -170,13 +217,14 @@
   1. Gå till <a href="https://www.smhi.se/data/hitta-data-for-en-plats/ladda-ner-observationer-fran-sjoar-och-vattendrag/waterLevel/2176" target="_blank">SMHI:s sida för Ringsjödammen övre</a><br>
   2. Ladda ner hela perioden som CSV<br>
   3. Döp om filen till <strong>smhi-opendata.csv</strong><br>
-  4. Ladda upp den till GitHub-repot <strong>Ringsjon-Water-Level</strong> (ersätt den gamla)<br>
+  4. Ladda upp den till GitHub-repot <strong>Ringsjoen-Water-Level</strong> (ersätt den gamla)<br>
   5. Ladda om sidan – klart!
 </div>
 
 <script>
-const CSV_URL       = 'smhi-opendata.csv';
-const MIN_VALID_CM  = 40 * 100;   // 40 m in cm
+const CSV_URL      = 'smhi-opendata.csv';
+const MIN_VALID_CM = 40 * 100;
+const START_DATE   = '1974-05-06';
 const DEFAULT_BENCH = 53.60;
 const LS_BENCH_KEY  = 'ringsjon_benchmark';
 
@@ -186,13 +234,13 @@ let activeMonths = 0;
 let chartInstance = null;
 
 function loadBenchmark() {
-  const saved = localStorage.getItem(LS_BENCH_KEY);
-  return saved !== null ? parseFloat(saved) : DEFAULT_BENCH;
+  const s = localStorage.getItem(LS_BENCH_KEY);
+  return s !== null ? parseFloat(s) : DEFAULT_BENCH;
 }
 function saveBenchmark(v) { localStorage.setItem(LS_BENCH_KEY, v.toString()); }
 
-const cmToM  = cm => cm / 100;
-const fmtM   = cm => cm != null ? cmToM(cm).toFixed(2) : '—';
+const cmToM = cm => cm / 100;
+const fmtM  = cm => cm != null ? cmToM(cm).toFixed(2) : '—';
 
 function setMsg(m) { document.getElementById('loader-msg').textContent = m; }
 
@@ -210,7 +258,7 @@ function parseCSV(text) {
     const p = line.split(';'); if (p.length < 2) continue;
     const date = p[0].trim();
     const cm   = parseFloat(p[1].trim().replace(',', '.'));
-    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(cm) && cm >= MIN_VALID_CM && date >= '1974-05-06') {
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(cm) && cm >= MIN_VALID_CM && date >= START_DATE) {
       rows.push({ date, cm });
     }
   }
@@ -218,6 +266,7 @@ function parseCSV(text) {
 }
 
 function computeStats(rows) {
+  if (rows.length === 0) return null;
   const vals   = rows.map(r => r.cm);
   const minVal = Math.min(...vals);
   const maxVal = Math.max(...vals);
@@ -230,35 +279,39 @@ function computeStats(rows) {
   };
 }
 
-function renderStats(s) {
+function renderHistoricalStats(s) {
+  document.getElementById('v-max').textContent = fmtM(s.max.cm);
+  document.getElementById('s-max').textContent = s.max.date;
+  document.getElementById('v-min').textContent = fmtM(s.min.cm);
+  document.getElementById('s-min').textContent = s.min.date;
+  document.getElementById('v-avg').textContent = fmtM(s.avg);
+  document.getElementById('s-avg').textContent = s.total.toLocaleString('sv') + ' dagar';
+}
+
+function renderPeriodStats(rows, label) {
+  const s = computeStats(rows);
+  document.getElementById('period-label').textContent = `VALD PERIOD · ${label}`;
+  if (!s) return;
   document.getElementById('v-current').textContent = fmtM(s.current?.cm);
   document.getElementById('s-current').textContent = s.current?.date ?? '';
-  document.getElementById('v-max').textContent     = fmtM(s.max.cm);
-  document.getElementById('s-max').textContent     = s.max.date;
-  document.getElementById('v-min').textContent     = fmtM(s.min.cm);
-  document.getElementById('s-min').textContent     = s.min.date;
-  document.getElementById('v-avg').textContent     = fmtM(s.avg);
-  document.getElementById('s-avg').textContent     = s.total.toLocaleString('sv') + ' dagar';
+  document.getElementById('v-pmax').textContent    = fmtM(s.max.cm);
+  document.getElementById('s-pmax').textContent    = s.max.date;
+  document.getElementById('v-pmin').textContent    = fmtM(s.min.cm);
+  document.getElementById('s-pmin').textContent    = s.min.date;
+  document.getElementById('v-pavg').textContent    = fmtM(s.avg);
+  document.getElementById('s-pavg').textContent    = s.total.toLocaleString('sv') + ' dagar';
 }
 
 function initBenchmark() {
   const b = loadBenchmark();
-  document.getElementById('bench-input').value     = b.toFixed(2);
-  document.getElementById('v-bench').textContent   = b.toFixed(2);
+  document.getElementById('bench-input').value   = b.toFixed(2);
+  document.getElementById('v-bench').textContent = b.toFixed(2);
 }
-
 function onBenchChange() {
   const raw = parseFloat(document.getElementById('bench-input').value);
   if (isNaN(raw)) return;
   document.getElementById('v-bench').textContent = raw.toFixed(2);
   saveBenchmark(raw);
-  if (allRows.length > 0) renderChart();
-}
-
-function setHorizon(months, btn) {
-  activeMonths = months;
-  document.querySelectorAll('.hbtn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
   if (allRows.length > 0) renderChart();
 }
 
@@ -268,6 +321,24 @@ function filterByHorizon(rows) {
   cutoff.setMonth(cutoff.getMonth() - activeMonths);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
   return rows.filter(r => r.date >= cutoffStr);
+}
+
+function horizonLabel() {
+  if (activeMonths === 0)  return 'ALLA DATA';
+  if (activeMonths === 1)  return 'SENASTE MÅNADEN';
+  if (activeMonths === 12) return 'SENASTE ÅRET';
+  return `SENASTE ${activeMonths} MÅNADERNA`;
+}
+
+function setHorizon(months, btn) {
+  activeMonths = months;
+  document.querySelectorAll('.hbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (allRows.length > 0) {
+    const filtered = filterByHorizon(allRows);
+    renderPeriodStats(filtered, horizonLabel());
+    renderChart();
+  }
 }
 
 function thinRows(rows) {
@@ -281,27 +352,23 @@ function thinRows(rows) {
 }
 
 function renderChart() {
-  const bench     = parseFloat(document.getElementById('bench-input').value) || DEFAULT_BENCH;
-  const filtered  = filterByHorizon(allRows);
-  const thin      = thinRows(filtered);
-  const labels    = thin.map(r => r.date);
-  const data      = thin.map(r => cmToM(r.cm));
-  const avgLine   = data.map(() => cmToM(globalStats.avg));
+  const bench    = parseFloat(document.getElementById('bench-input').value) || DEFAULT_BENCH;
+  const filtered = filterByHorizon(allRows);
+  const thin     = thinRows(filtered);
+  const labels   = thin.map(r => r.date);
+  const data     = thin.map(r => cmToM(r.cm));
+  const avgLine  = data.map(() => cmToM(globalStats.avg));
   const benchLine = data.map(() => bench);
+  const label    = horizonLabel();
 
-  const horizonLabel =
-    activeMonths === 0  ? 'ALLA DATA' :
-    activeMonths === 1  ? 'SENASTE MÅNADEN' :
-    activeMonths === 12 ? 'SENASTE ÅRET' :
-    `SENASTE ${activeMonths} MÅNADERNA`;
-  document.getElementById('chart-label').textContent = `VATTENSTÅND (m ö.h.) · ${horizonLabel}`;
+  document.getElementById('chart-label').textContent = `VATTENSTÅND (m ö.h.) · ${label}`;
 
   if (chartInstance) chartInstance.destroy();
   chartInstance = new Chart(document.getElementById('myChart').getContext('2d'), {
     type: 'line',
     data: { labels, datasets: [
       { label:'Vattenstånd', data,        borderColor:'#34b464',               borderWidth:1.5, pointRadius:0, tension:0.3, fill:false },
-      { label:'Medel',       data:avgLine,   borderColor:'rgba(245,158,11,0.6)', borderWidth:1,   pointRadius:0, tension:0,   fill:false, borderDash:[6,4] },
+      { label:'Hist. medel', data:avgLine,   borderColor:'rgba(245,158,11,0.6)', borderWidth:1,   pointRadius:0, tension:0,   fill:false, borderDash:[6,4] },
       { label:'Benchmark',   data:benchLine, borderColor:'rgba(167,139,250,0.7)',borderWidth:1,   pointRadius:0, tension:0,   fill:false, borderDash:[3,3] },
     ]},
     options: {
@@ -323,9 +390,9 @@ function renderChart() {
             callback:(_,i) => {
               const d = labels[i]; if (!d) return '';
               const spanDays = (new Date(labels[labels.length-1]) - new Date(labels[0])) / 86400000;
-              return spanDays <= 60  ? d.slice(5)    // MM-DD
-                   : spanDays <= 400 ? d.slice(0,7)  // YYYY-MM
-                   :                   d.slice(0,4);  // YYYY
+              return spanDays <= 60  ? d.slice(5)
+                   : spanDays <= 400 ? d.slice(0,7)
+                   :                   d.slice(0,4);
             }
           },
           grid:{ color:'rgba(52,180,100,0.07)' }, border:{ color:'rgba(52,180,100,0.15)' }
@@ -351,13 +418,15 @@ async function loadData() {
       throw new Error(`HTTP ${res.status}`);
     }
     setMsg('Tolkar data…');
-    const text = await res.text();
-    allRows = parseCSV(text);
-    if (allRows.length === 0) throw new Error('Inga giltiga datarader (≥40 m) hittades.\nKontrollera CSV-formatet.');
+    allRows = parseCSV(await res.text());
+    if (allRows.length === 0) throw new Error('Inga giltiga datarader hittades.\nKontrollera CSV-formatet.');
+
     setMsg('Beräknar statistik…');
     globalStats = computeStats(allRows);
-    renderStats(globalStats);
+    renderHistoricalStats(globalStats);
+    renderPeriodStats(allRows, 'ALLA DATA');
     initBenchmark();
+
     document.getElementById('loader').style.display  = 'none';
     document.getElementById('content').style.display = 'block';
     renderChart();
@@ -369,7 +438,6 @@ async function loadData() {
   }
 }
 
-// Auto-load on page open
 window.addEventListener('load', loadData);
 </script>
 </body>
