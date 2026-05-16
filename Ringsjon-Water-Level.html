@@ -41,9 +41,10 @@
   #error-box {
     display:none; margin-top:28px; padding:18px 20px;
     background:rgba(248,113,113,0.07); border:1px solid rgba(248,113,113,0.3);
-    border-radius:6px; color:#f87171; font-size:13px;
+    border-radius:6px; color:#f87171;
   }
   .err-label { font-size:9px; letter-spacing:0.2em; margin-bottom:8px; opacity:0.7; }
+  #error-detail { font-size:11px; color:#ff9999; margin-top:10px; line-height:1.6; white-space:pre-wrap; }
   #content { display:none; margin-top:36px; animation:fadein 0.5s ease; }
   @keyframes fadein { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
   .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:36px; }
@@ -72,9 +73,9 @@
 <body>
 
 <div style="margin-bottom:40px">
-  <div class="eyebrow">SMHI · Ringsjödammen övre · Station 2176</div>
+  <div class="eyebrow">SMHI · Ringsjödammen övre · Vattenstånd</div>
   <h1>Ringsjön<br><em>Water Level</em></h1>
-  <div class="tagline">Dagliga mätningar fr.o.m. 1974-04-21 · SMHI Open Data (CC-BY)</div>
+  <div class="tagline">Dagliga mätningar fr.o.m. 1974 · SMHI Open Data (CC-BY)</div>
   <button class="fetch-btn" id="fetchBtn" onclick="loadData()">
     <span class="dot"></span>
     HÄMTA DATA FRÅN SMHI
@@ -89,68 +90,44 @@
 <div id="error-box">
   <div class="err-label">FEL VID DATAHÄMTNING</div>
   <div id="error-msg"></div>
+  <div id="error-detail"></div>
   <button class="fetch-btn" style="margin-top:16px" onclick="loadData()">FÖRSÖK IGEN</button>
 </div>
 
 <div id="content">
   <div class="cards">
-    <div class="card c-current">
-      <div class="card-label">AKTUELLT</div>
-      <div class="card-value" id="v-current">—</div>
-      <div class="card-unit">cm ö.h.</div>
-      <div class="card-sub" id="s-current"></div>
-    </div>
-    <div class="card c-max">
-      <div class="card-label">HISTORISKT MAX</div>
-      <div class="card-value" id="v-max">—</div>
-      <div class="card-unit">cm ö.h.</div>
-      <div class="card-sub" id="s-max"></div>
-    </div>
-    <div class="card c-min">
-      <div class="card-label">HISTORISKT MIN</div>
-      <div class="card-value" id="v-min">—</div>
-      <div class="card-unit">cm ö.h.</div>
-      <div class="card-sub" id="s-min"></div>
-    </div>
-    <div class="card c-avg">
-      <div class="card-label">HISTORISKT MEDEL</div>
-      <div class="card-value" id="v-avg">—</div>
-      <div class="card-unit">cm ö.h.</div>
-      <div class="card-sub" id="s-avg"></div>
-    </div>
-    <div class="card c-sept">
-      <div class="card-label">1 SEPT 2024</div>
-      <div class="card-value" id="v-sept">—</div>
-      <div class="card-unit">cm ö.h.</div>
-      <div class="card-sub" id="s-sept"></div>
-    </div>
+    <div class="card c-current"><div class="card-label">AKTUELLT</div><div class="card-value" id="v-current">—</div><div class="card-unit">cm ö.h.</div><div class="card-sub" id="s-current"></div></div>
+    <div class="card c-max"><div class="card-label">HISTORISKT MAX</div><div class="card-value" id="v-max">—</div><div class="card-unit">cm ö.h.</div><div class="card-sub" id="s-max"></div></div>
+    <div class="card c-min"><div class="card-label">HISTORISKT MIN</div><div class="card-value" id="v-min">—</div><div class="card-unit">cm ö.h.</div><div class="card-sub" id="s-min"></div></div>
+    <div class="card c-avg"><div class="card-label">HISTORISKT MEDEL</div><div class="card-value" id="v-avg">—</div><div class="card-unit">cm ö.h.</div><div class="card-sub" id="s-avg"></div></div>
+    <div class="card c-sept"><div class="card-label">1 SEPT 2024</div><div class="card-value" id="v-sept">—</div><div class="card-unit">cm ö.h.</div><div class="card-sub" id="s-sept"></div></div>
   </div>
-
   <div class="chart-box">
     <div class="chart-label">VATTENSTÅND (cm) · 1974 – IDAG</div>
     <canvas id="myChart" height="220"></canvas>
   </div>
-
   <div class="footer" id="footer"></div>
 </div>
 
 <script>
-const SMHI_URL = 'https://opendata-download-hydroobs.smhi.se/api/version/latest/parameter/7/station/2176/period/corrected-archive/data.csv';
+const API = 'https://opendata-download-hydroobs.smhi.se/api/version/1.0';
+const SEARCH_NAMES = ['ringsjödammen', 'ringsjo', 'ringsjö'];
 let chartInstance = null;
 
 function setMsg(m) { document.getElementById('loader-msg').textContent = m; }
 
-function showError(m) {
+function showError(msg, detail) {
   document.getElementById('loader').style.display = 'none';
   document.getElementById('fetchBtn').style.display = 'inline-flex';
-  document.getElementById('error-msg').textContent = m;
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('error-detail').textContent = detail || '';
   document.getElementById('error-box').style.display = 'block';
 }
 
 function parseCSV(text) {
   const rows = []; let started = false;
   for (const line of text.split('\n')) {
-    if (!started) { if (line.startsWith('Datum')) started = true; continue; }
+    if (!started) { if (line.startsWith('Datum')) { started = true; } continue; }
     const p = line.split(';'); if (p.length < 2) continue;
     const date = p[0].trim();
     const val  = parseFloat(p[1].trim().replace(',', '.'));
@@ -229,29 +206,60 @@ function renderChart(rows, stats) {
   });
 }
 
+async function findStationId() {
+  // Fetch all stations for parameter 7 (vattenstånd) and find Ringsjödammen
+  const res = await fetch(`${API}/parameter/7.json`);
+  if (!res.ok) throw new Error(`Kunde inte hämta stationslista: HTTP ${res.status}`);
+  const data = await res.json();
+  const stations = data.station || [];
+
+  // Find by name match
+  const match = stations.find(s => {
+    const name = (s.name || '').toLowerCase();
+    return SEARCH_NAMES.some(n => name.includes(n));
+  });
+
+  if (!match) {
+    // List all station names to help debug
+    const names = stations.map(s => s.name).join(', ');
+    throw new Error(`Hittade inte Ringsjödammen i stationslistan.\nTillgängliga stationer: ${names}`);
+  }
+
+  return { id: match.id, name: match.name };
+}
+
 async function loadData() {
   document.getElementById('fetchBtn').style.display  = 'none';
   document.getElementById('error-box').style.display = 'none';
   document.getElementById('content').style.display   = 'none';
   document.getElementById('loader').style.display    = 'block';
+
   try {
-    setMsg('Hämtar data från SMHI…');
-    const res = await fetch(SMHI_URL);
-    if (!res.ok) throw new Error(`SMHI svarade med HTTP ${res.status}`);
+    setMsg('Söker rätt station hos SMHI…');
+    const station = await findStationId();
+    setMsg(`Hämtar data för ${station.name} (ID: ${station.id})…`);
+
+    const csvUrl = `${API}/parameter/7/station/${station.id}/period/corrected-archive/data.csv`;
+    const res = await fetch(csvUrl);
+    if (!res.ok) throw new Error(`SMHI svarade HTTP ${res.status} för station ${station.id}`);
+
     setMsg('Tolkar CSV…');
     const text = await res.text();
     const rows = parseCSV(text);
-    if (rows.length === 0) throw new Error('Inga datarader hittades');
+    if (rows.length === 0) throw new Error('Inga datarader hittades i CSV-filen');
+
     setMsg('Beräknar statistik…');
     const stats = computeStats(rows);
     renderStats(stats);
+
     document.getElementById('loader').style.display  = 'none';
     document.getElementById('content').style.display = 'block';
     renderChart(rows, stats);
     document.getElementById('footer').textContent =
-      `SMHI Open Data · CC-BY · Hämtad ${new Date().toLocaleDateString('sv-SE')} · ${rows.length.toLocaleString('sv')} mätpunkter`;
+      `SMHI Open Data · CC-BY · ${station.name} · Hämtad ${new Date().toLocaleDateString('sv-SE')} · ${rows.length.toLocaleString('sv')} mätpunkter`;
+
   } catch(e) {
-    showError(e.message);
+    showError(e.message.split('\n')[0], e.message.split('\n').slice(1).join('\n'));
   }
 }
 </script>
