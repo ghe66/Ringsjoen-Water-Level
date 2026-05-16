@@ -45,6 +45,11 @@
   }
   .err-label { font-size:9px; letter-spacing:0.2em; margin-bottom:8px; opacity:0.7; }
   #error-detail { font-size:11px; color:#ff9999; margin-top:10px; line-height:1.6; white-space:pre-wrap; }
+  #debug-box {
+    display:none; margin-top:20px; padding:14px 16px;
+    background:rgba(52,180,100,0.05); border:1px solid rgba(52,180,100,0.2);
+    border-radius:6px; font-size:10px; color:#3a6b4a; line-height:1.8; white-space:pre-wrap;
+  }
   #content { display:none; margin-top:36px; animation:fadein 0.5s ease; }
   @keyframes fadein { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
   .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:36px; }
@@ -94,6 +99,8 @@
   <button class="fetch-btn" style="margin-top:16px" onclick="loadData()">FÖRSÖK IGEN</button>
 </div>
 
+<div id="debug-box"></div>
+
 <div id="content">
   <div class="cards">
     <div class="card c-current"><div class="card-label">AKTUELLT</div><div class="card-value" id="v-current">—</div><div class="card-unit">cm ö.h.</div><div class="card-sub" id="s-current"></div></div>
@@ -113,8 +120,10 @@
 const API = 'https://opendata-download-hydroobs.smhi.se/api/version/1.0';
 const SEARCH_NAMES = ['ringsjödammen', 'ringsjo', 'ringsjö'];
 let chartInstance = null;
+const debugLines = [];
 
 function setMsg(m) { document.getElementById('loader-msg').textContent = m; }
+function dbg(m) { debugLines.push(m); }
 
 function showError(msg, detail) {
   document.getElementById('loader').style.display = 'none';
@@ -122,6 +131,9 @@ function showError(msg, detail) {
   document.getElementById('error-msg').textContent = msg;
   document.getElementById('error-detail').textContent = detail || '';
   document.getElementById('error-box').style.display = 'block';
+  // Always show debug info on error
+  document.getElementById('debug-box').textContent = debugLines.join('\n');
+  document.getElementById('debug-box').style.display = 'block';
 }
 
 function parseCSV(text) {
@@ -131,7 +143,6 @@ function parseCSV(text) {
     const p = line.split(';'); if (p.length < 2) continue;
     const date = p[0].trim();
     const val  = parseFloat(p[1].trim().replace(',', '.'));
-    // Filter out invalid dates, NaN, and zero/negative values (missing data)
     if (date && /^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(val) && val > 0) {
       rows.push({ date, value: val });
     }
@@ -220,30 +231,48 @@ async function findStation() {
   if (!res.ok) throw new Error(`Kunde inte hämta stationslista: HTTP ${res.status}`);
   const data = await res.json();
   const stations = data.station || [];
+  dbg(`Totalt ${stations.length} stationer för parameter 7`);
   const match = stations.find(s => SEARCH_NAMES.some(n => (s.name||'').toLowerCase().includes(n)));
   if (!match) throw new Error(`Hittade inte Ringsjödammen.\nStationer: ${stations.map(s=>s.name).join(', ')}`);
+  dbg(`Hittade station: ${match.name} (ID: ${match.id})`);
   return match;
 }
 
 async function getAvailablePeriods(stationId) {
-  // Fetch the station metadata to see which periods exist
   const res = await fetch(`${API}/parameter/7/station/${stationId}.json`);
-  if (!res.ok) return [];
+  if (!res.ok) {
+    dbg(`Kunde inte hämta stationsinfo: HTTP ${res.status}`);
+    return [];
+  }
   const data = await res.json();
-  return (data.period || []).map(p => p.key);
+  const periods = (data.period || []).map(p => ({ key: p.key, from: p.from, to: p.to }));
+  dbg(`Tillgängliga perioder:\n${periods.map(p => `  ${p.key}: ${new Date(p.from).toISOString().slice(0,10)} → ${new Date(p.to).toISOString().slice(0,10)}`).join('\n')}`);
+  return periods.map(p => p.key);
 }
 
 async function fetchPeriod(stationId, period) {
   try {
-    const res = await fetch(`${API}/parameter/7/station/${stationId}/period/${period}/data.csv`);
-    if (!res.ok) return [];
-    return parseCSV(await res.text());
-  } catch { return []; }
+    const url = `${API}/parameter/7/station/${stationId}/period/${period}/data.csv`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      dbg(`  ${period}: HTTP ${res.status}`);
+      return [];
+    }
+    const text = await res.text();
+    const rows = parseCSV(text);
+    dbg(`  ${period}: ${rows.length} rader (${rows[0]?.date ?? '?'} → ${rows[rows.length-1]?.date ?? '?'})`);
+    return rows;
+  } catch(e) {
+    dbg(`  ${period}: fel – ${e.message}`);
+    return [];
+  }
 }
 
 async function loadData() {
+  debugLines.length = 0;
   document.getElementById('fetchBtn').style.display  = 'none';
   document.getElementById('error-box').style.display = 'none';
+  document.getElementById('debug-box').style.display = 'none';
   document.getElementById('content').style.display   = 'none';
   document.getElementById('loader').style.display    = 'block';
 
@@ -251,17 +280,22 @@ async function loadData() {
     setMsg('Söker station hos SMHI…');
     const station = await findStation();
 
-    setMsg('Kontrollerar tillgängliga tidsperioder…');
+    setMsg('Hämtar tillgängliga perioder…');
     const periods = await getAvailablePeriods(station.id);
-    setMsg(`Hämtar data för ${periods.length} period(er)…`);
 
-    // Fetch all available periods in parallel
-    const allFetched = await Promise.all(periods.map(p => fetchPeriod(station.id, p)));
-    const allRows = mergeRows(...allFetched);
+    setMsg(`Hämtar data (${periods.length} perioder)…`);
+    dbg(`\nHämtar data för ${periods.length} period(er):`);
+    const fetched = await Promise.all(periods.map(p => fetchPeriod(station.id, p)));
+    const allRows = mergeRows(...fetched);
 
-    if (allRows.length === 0) {
-      throw new Error(`Inga giltiga datarader.\nTillgängliga perioder: ${periods.join(', ') || 'inga'}`);
-    }
+    dbg(`\nTotalt efter merge: ${allRows.length} rader`);
+    dbg(`Datumspann: ${allRows[0]?.date} → ${allRows[allRows.length-1]?.date}`);
+
+    // Show debug info even on success
+    document.getElementById('debug-box').textContent = debugLines.join('\n');
+    document.getElementById('debug-box').style.display = 'block';
+
+    if (allRows.length === 0) throw new Error('Inga giltiga datarader hittades');
 
     setMsg('Beräknar statistik…');
     const stats = computeStats(allRows);
