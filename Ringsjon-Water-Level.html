@@ -136,6 +136,14 @@ function parseCSV(text) {
   return rows;
 }
 
+function mergeRows(archive, recent) {
+  // Combine, deduplicate by date, sort chronologically
+  const map = new Map();
+  for (const r of archive) map.set(r.date, r);
+  for (const r of recent)  map.set(r.date, r); // recent overwrites if overlap
+  return Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date));
+}
+
 function computeStats(rows) {
   const vals = rows.map(r => r.value);
   const minVal = Math.min(...vals), maxVal = Math.max(...vals);
@@ -207,25 +215,27 @@ function renderChart(rows, stats) {
 }
 
 async function findStationId() {
-  // Fetch all stations for parameter 7 (vattenstånd) and find Ringsjödammen
   const res = await fetch(`${API}/parameter/7.json`);
   if (!res.ok) throw new Error(`Kunde inte hämta stationslista: HTTP ${res.status}`);
   const data = await res.json();
   const stations = data.station || [];
-
-  // Find by name match
   const match = stations.find(s => {
     const name = (s.name || '').toLowerCase();
     return SEARCH_NAMES.some(n => name.includes(n));
   });
-
   if (!match) {
-    // List all station names to help debug
     const names = stations.map(s => s.name).join(', ');
-    throw new Error(`Hittade inte Ringsjödammen i stationslistan.\nTillgängliga stationer: ${names}`);
+    throw new Error(`Hittade inte Ringsjödammen.\nTillgängliga: ${names}`);
   }
-
   return { id: match.id, name: match.name };
+}
+
+async function fetchPeriod(stationId, period) {
+  const url = `${API}/parameter/7/station/${stationId}/period/${period}/data.csv`;
+  const res = await fetch(url);
+  if (!res.ok) return []; // period may not exist — that's ok
+  const text = await res.text();
+  return parseCSV(text);
 }
 
 async function loadData() {
@@ -237,26 +247,33 @@ async function loadData() {
   try {
     setMsg('Söker rätt station hos SMHI…');
     const station = await findStationId();
-    setMsg(`Hämtar data för ${station.name} (ID: ${station.id})…`);
 
-    const csvUrl = `${API}/parameter/7/station/${station.id}/period/corrected-archive/data.csv`;
-    const res = await fetch(csvUrl);
-    if (!res.ok) throw new Error(`SMHI svarade HTTP ${res.status} för station ${station.id}`);
+    setMsg('Hämtar historisk data (1974–2011)…');
+    const archive = await fetchPeriod(station.id, 'corrected-archive');
 
-    setMsg('Tolkar CSV…');
-    const text = await res.text();
-    const rows = parseCSV(text);
-    if (rows.length === 0) throw new Error('Inga datarader hittades i CSV-filen');
+    setMsg('Hämtar nyare data…');
+    // Try all available recent periods
+    const [recent, latest] = await Promise.all([
+      fetchPeriod(station.id, 'latest-months'),
+      fetchPeriod(station.id, 'latest-day'),
+    ]);
+
+    setMsg('Slår ihop datakällor…');
+    const allRows = mergeRows(archive, mergeRows(recent, latest));
+
+    if (allRows.length === 0) throw new Error('Inga datarader hittades');
 
     setMsg('Beräknar statistik…');
-    const stats = computeStats(rows);
+    const stats = computeStats(allRows);
     renderStats(stats);
 
     document.getElementById('loader').style.display  = 'none';
     document.getElementById('content').style.display = 'block';
-    renderChart(rows, stats);
+    renderChart(allRows, stats);
+
+    const dateRange = `${allRows[0].date} – ${allRows[allRows.length-1].date}`;
     document.getElementById('footer').textContent =
-      `SMHI Open Data · CC-BY · ${station.name} · Hämtad ${new Date().toLocaleDateString('sv-SE')} · ${rows.length.toLocaleString('sv')} mätpunkter`;
+      `SMHI Open Data · CC-BY · ${station.name} · ${dateRange} · ${allRows.length.toLocaleString('sv')} mätpunkter · Hämtad ${new Date().toLocaleDateString('sv-SE')}`;
 
   } catch(e) {
     showError(e.message.split('\n')[0], e.message.split('\n').slice(1).join('\n'));
