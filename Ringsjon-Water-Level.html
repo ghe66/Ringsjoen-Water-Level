@@ -3,55 +3,64 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ringsjön – Station Finder</title>
+<title>SMHI URL Tester</title>
 <style>
   body { background:#05100a; color:#c8e6d0; font-family:monospace; padding:28px 20px; }
-  h1 { color:#34b464; font-size:20px; margin-bottom:20px; }
+  h1 { color:#34b464; font-size:18px; margin-bottom:8px; }
+  p  { color:#3a6b4a; font-size:11px; margin-bottom:20px; }
   button { padding:12px 24px; background:transparent; border:1px solid #34b464; border-radius:4px; color:#34b464; font-family:monospace; font-size:12px; cursor:pointer; letter-spacing:0.1em; }
-  #out { margin-top:24px; font-size:11px; line-height:2; white-space:pre-wrap; color:#3a6b4a; }
-  .hit { color:#2dd4bf; font-weight:bold; }
+  #out { margin-top:24px; font-size:11px; line-height:2; white-space:pre-wrap; }
+  .ok  { color:#34b464; }
+  .err { color:#f87171; }
 </style>
 </head>
 <body>
-<h1>SMHI Station Finder – Parameter 7 (Vattenstånd)</h1>
-<button onclick="run()">LISTA ALLA STATIONER</button>
+<h1>SMHI Station 2176 – URL Tester</h1>
+<p>Testar olika API-URL:er för Ringsjödammen övre (station 2176)</p>
+<button onclick="run()">TESTA</button>
 <div id="out"></div>
 <script>
-const API = 'https://opendata-download-hydroobs.smhi.se/api/version/1.0';
 const out = document.getElementById('out');
 
-function ts(ms) {
-  if (!ms) return '?';
-  try { return new Date(Number(ms)).toISOString().slice(0,10); } catch { return '?'; }
+function append(text, cls) {
+  const s = document.createElement('span');
+  s.className = cls || '';
+  s.textContent = text + '\n';
+  out.appendChild(s);
 }
 
-async function run() {
-  out.textContent = 'Hämtar stationslista...';
-  const res = await fetch(`${API}/parameter/7.json`);
-  const data = await res.json();
-  const stations = data.station || [];
-  out.textContent = `Totalt ${stations.length} stationer:\n\n`;
+const URLS = [
+  // Meteorological observations API (different from hydroobs)
+  'https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/7/station/2176/period/corrected-archive/data.csv',
+  'https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/7/station/2176/period/latest-months/data.csv',
+  // Hydro with station 2176
+  'https://opendata-download-hydroobs.smhi.se/api/version/1.0/parameter/7/station/2176/period/corrected-archive/data.csv',
+  'https://opendata-download-hydroobs.smhi.se/api/version/1.0/parameter/7/station/2176/period/latest-months/data.csv',
+  'https://opendata-download-hydroobs.smhi.se/api/version/1.0/parameter/7/station/2176/period/latest-day/data.csv',
+  // Try station 2176 info page
+  'https://opendata-download-hydroobs.smhi.se/api/version/1.0/parameter/7/station/2176.json',
+  // Try the SE.ACMF dataset mentioned on SMHI's page
+  'https://opendata-download-hydroobs.smhi.se/api/version/1.0/parameter/SE.ACMF/station/2176/period/corrected-archive/data.csv',
+];
 
-  for (const s of stations) {
-    // Fetch period info for each station
+async function run() {
+  out.textContent = '';
+  for (const url of URLS) {
     try {
-      const r2 = await fetch(`${API}/parameter/7/station/${s.id}.json`);
-      const d2 = await r2.json();
-      const periods = (d2.period || []).map(p => `${p.key}(${ts(p.from)}→${ts(p.to)})`).join(' | ');
-      const isRing = (s.name||'').toLowerCase().includes('ring');
-      const line = `ID:${s.id}  ${s.name}  ${periods}\n`;
-      if (isRing) {
-        const span = document.createElement('span');
-        span.className = 'hit';
-        span.textContent = '★ ' + line;
-        out.appendChild(span);
+      const short = url.replace('https://opendata-download-', '').replace('.smhi.se','');
+      const res = await fetch(url);
+      const text = await res.text();
+      const preview = text.slice(0, 120).replace(/\n/g, ' ');
+      if (res.ok) {
+        append(`✓ HTTP ${res.status}  ${short}\n  → ${preview}`, 'ok');
       } else {
-        out.appendChild(document.createTextNode(line));
+        append(`✗ HTTP ${res.status}  ${short}`, 'err');
       }
     } catch(e) {
-      out.appendChild(document.createTextNode(`ID:${s.id}  ${s.name}  (fel: ${e.message})\n`));
+      append(`✗ FEL: ${url.slice(0,60)}…  ${e.message}`, 'err');
     }
   }
+  append('\nKLAR');
 }
 </script>
 </body>
